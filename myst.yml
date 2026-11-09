@@ -8,6 +8,7 @@ project:
   authors: 
     - name: Freek Pols
     - name: Roel Smit
+    - name: Quinten van Oostveen
 
   github: https://github.com/MosmanTU/TO_Thermo
   plugins:
