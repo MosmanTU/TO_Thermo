@@ -554,8 +554,8 @@ Test wederom je code door de vernieuwde functie hierboven te plakken.
 ```python tags=["NB1_hardewand"]
 # harde wanden
 def update(frame):
-    if particle.r[0] <= 10:
-        particle.r[1] = -particle.r[1]
+    if abs(particle.r[0]) >= 10:
+        particle.v[0] = -particle.v[0]
     particle.update_position()
     dot.set_data([particle.r[0]], [particle.r[1]])
 ### YOUR CODE HERE ###
