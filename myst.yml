@@ -6,8 +6,7 @@ project:
   # description:
   # keywords: []
   authors: 
-    - name: Freek Pols
-    - name: Roel Smit
+    - name: Olivier Mos
     - name: Quinten van Oostveen
 
   github: https://github.com/MosmanTU/TO_Thermo
