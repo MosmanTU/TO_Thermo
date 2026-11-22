@@ -121,6 +121,8 @@ In Q2 werken we aan een deeltjes model. Dat model bestaat uiteindelijk uit een s
 Een *class* is een blauwdruk voor het creëren van objecten (zoals deeltjes, atomen, planeten, auto's, studenten... noem maar op!). Het stelt je in staat om data (zoals positie, massa) en gedrag (zoals bewegen, botsen) te bundelen tot één overzichtelijk geheel. Precies wat we nodig hebben. Laten we de anatomie van een deeltje creëren.
 
 ```python
+import numpy as np
+import matplotlib.pyplot as plt
 # Definieer een class voor een deeltje. 
 # Een class beschrijft alleen het type eigenschappen dat een ding heeft, bijvoorbeeld: in de beschrijving van de class zeg je:
 # - een deeltje heeft een positie.
@@ -941,7 +943,8 @@ Nu je een beetje weet hoe een numeriek model werkt, hoe je boundaries kunt opgev
 ```
 
 ```{solution} ex-deeltjes_10
-Jouw antwoord.
+Jouw antwoord:
+1. Als positie van $r_1 + R$ overeenkomt met de positie van $r_2 + R$ dan is er sprake van een botsing
 ```
 
 ```python tags=["NB1_botsingsvoorwaarde"]
@@ -960,6 +963,10 @@ class ParticleClass:
 
     def collide_detection(self, other):
         ### YOUR CODE HERE ###
+        dx = self.r[0] - other.r[0]
+        dy = self.r[1] - other.r[1]
+        rr = self.R + other.R
+
         return  dx**2+dy**2 < rr**2 
 ```
 
@@ -1002,7 +1009,7 @@ def update(frame):
     particleA.update_position()
     particleB.update_position()
 
-    track_x.append(particleA.r[0])
+    track_x.append(particleA.r[0]) #Alleen particleA het pad plotten?
     track_y.append(particleA.r[1])
     track_line.set_data(track_x, track_y)
     
@@ -1012,15 +1019,21 @@ def update(frame):
     # botsing tussen de deeltjes onderling
     if particleA.collide_detection(particleB):
         ### YOUR CODE HERE ###
+        if particleA.v[0] > particleB.v[0]:
+            vA = particleA.v.copy()
+            vB = particleB.v.copy()
+
+            particleA.v[0] = vB[0]
+            particleB.v[0] = vA[0]
 
 
     # botsing met de wand
-    if particleA.r[0]**2>100: 
+    if particleA.r[0]**2>100:
         particleA.v[0] = -particleA.v[0]
-    if particleA.r[1]**2>100: 
+    if particleA.r[1]**2>100:
         particleA.v[1] = -particleA.v[1]
 
-    dot.set_data([particleB.r[0]], [particleB.r[1]])
+#    dot.set_data([particleB.r[0]], [particleB.r[1]]) #(Overbodig wegens dotB.set_data)
     if particleB.r[0]**2>100: 
         particleB.v[0] = -particleB.v[0]
     if particleB.r[1]**2>100: 
@@ -1030,7 +1043,7 @@ def update(frame):
 
 # Creeer animatie
 ani = FuncAnimation(fig, update, frames=range(num_steps), init_func=init, blit=True, interval=50)
-
+plt.close()
 # Voor Jupyter notebook:
 from IPython.display import HTML
 HTML(ani.to_jshtml())
@@ -1090,7 +1103,7 @@ Wat is de beperkende factor in ons script om het aantal botsingen als functie va
 ```
 
 ```{solution} ex-deeltjes-12
-Jouw antwoord
+Het aantal botsingen door beperkte dt, en het beperkt aantal frames
 ```
 
 
@@ -1166,7 +1179,7 @@ def update(frame):
         particleA.v = vA_new
         particleB.v = vB_new
         ### YOUR CODE HERE ###
-
+        counter+=1
 
     # wall collision detection and response
     if particleA.r[0]**2>100: # Check if particle is outside the bounds, np.abs could be used but is slower
@@ -1187,7 +1200,7 @@ def update(frame):
 
 # Create animation
 ani = FuncAnimation(fig, update, frames=range(200), init_func=init, blit=True, interval=50)
-
+plt.close()
 # For Jupyter notebook:
 from IPython.display import HTML
 HTML(ani.to_jshtml())
@@ -1201,6 +1214,113 @@ Pas de bovenstaande code aan zodat $m_1 = 1$ en $m_2 = 50$. Run de code en geef 
 ```python tags=["NB1_eindantwoord"]
 #num_botsingen = ...
 ### YOUR CODE HERE ###
+
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation
+
+class ParticleClass:
+    def __init__(self, m, v, r, R):
+        self.m = m                  # mass of the particle
+        self.v = np.array(v, dtype=float)  # velocity vector
+        self.r = np.array(r, dtype=float)  # position vector
+        self.R = R                         # radius of the particle
+
+    def update_position(self):
+        self.r += self.v * dt 
+
+    def collide_detection(self, other):
+        return np.linalg.norm(self.r - other.r) <= (self.R + other.R)
+
+# Simulation parameters
+dt = 0.02         # time step
+num_steps = 1530  # number of time steps
+m1 = 1.0
+m2 = 50
+
+particleA = ParticleClass(m=m1, v=[0, 0], r=[-4.0, 0.0],R=0.45)  
+particleB = ParticleClass(m=m2, v=[-1, 0], r=[-2.0, 0.0],R=0.45)  
+
+
+# Create the figure and axis
+
+fig, ax = plt.subplots()
+
+ax.set_xlim(-10, 10)
+ax.set_ylim(-10, 10)
+ax.set_aspect('equal')
+ax.set_title("Particle Animation")
+ax.set_xlabel("x")
+ax.set_ylabel("y")
+dot, = ax.plot([], [], 'ro', markersize=10); # semicolon to suppress output
+
+counter = 0
+
+# Create the particle as a red dot
+dotA, = ax.plot([], [], 'ro', markersize=10)
+dotB, = ax.plot([], [], 'bo', markersize=10)
+
+counter_text = ax.text(-9.5, 9, "")
+# Initialization function for animation
+def init():
+    dot.set_data([], [])
+    counter_text.set_text("Collisions: 0")
+    return dot, counter_text
+
+# Update function for each frame
+def update(frame):
+    global counter
+    if particleA.r[0] < particleB.r[0]: #stopt de simulatie als de deeltjes door elkaar heen morphen
+        ani.event_source.stop()
+
+    particleA.update_position()
+    particleB.update_position()
+
+    dotA.set_data([particleA.r[0]], [particleA.r[1]])
+    dotB.set_data([particleB.r[0]], [particleB.r[1]])
+
+    counter_text.set_text(f"Collisions: {counter}")
+
+    #collision detection and response
+    if particleA.collide_detection(particleB):
+        vA, vB, mA, mB, rA, rB = particleA.v, particleB.v, particleA.m, particleB.m, particleA.r, particleB.r
+        vA_new = vA - 2 * mB / (mA + mB) * np.dot(vA - vB, rA - rB) / (1e-12+np.linalg.norm(rA - rB))**2 * (rA - rB)
+        vB_new = vB - 2 * mA / (mA + mB) * np.dot(vB - vA, rB - rA) / (1e-12+np.linalg.norm(rB - rA))**2 * (rB - rA)
+        particleA.v = vA_new
+        particleB.v = vB_new
+        ### YOUR CODE HERE ###
+        overlap = particleA.R + particleB.R - np.linalg.norm(rA-rB)
+        particleA.r += 0.5 * overlap * (rA-rB) / np.linalg.norm(rA-rB)
+        particleB.r -= 0.5 * overlap * (rA-rB) / np.linalg.norm(rA-rB)
+    
+        counter+=1
+
+    # wall collision detection and response
+    if particleA.r[0]**2>(10-particleA.R)**2: # Check if particle is outside the bounds, np.abs could be used but is slower
+        particleA.v[0] = -particleA.v[0]
+        counter += 1 #de counter omhoog als A de muur raakt, geen verticale snelheid en A raak als enige de muur dus vandaar alleen deze
+        ### YOUR CODE HERE ###
+    if particleA.r[1]**2>100: 
+        particleA.v[1] = -particleA.v[1]
+        ### YOUR CODE HERE ###
+
+    dot.set_data([particleB.r[0]], [particleB.r[1]])
+    if particleB.r[0]**2>(10-particleB.R)**2: 
+        particleB.v[0] = -particleB.v[0]
+
+    if particleB.r[1]**2>100: 
+        particleB.v[1] = -particleB.v[1]
+
+    return dot, counter_text
+
+# Create animation
+ani = FuncAnimation(fig, update, frames=range(num_steps), init_func=init, blit=True, interval=50)
+plt.close()
+# For Jupyter notebook:
+from IPython.display import HTML, display
+display(HTML(ani.to_jshtml()))
+
+print(f"Er zijn {counter} botsingen.")
 ```
 
 ```{exercise}
